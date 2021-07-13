@@ -36,6 +36,8 @@ ios:
   xcassetsInMainBundle: true
   # [optional] Is Assets.xcassets located in a swift package? Default value is false.
   xcassetsInSwiftPackage: false
+  # [optional] Is Assets.xcassets located in a resource bundle? Default value is nil.
+  xcassetsInResourceBundleName: "FigmaAssets.bundle"
 
   # Parameters for exporting colors
   colors:
