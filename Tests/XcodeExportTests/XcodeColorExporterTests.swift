@@ -17,7 +17,9 @@ final class XcodeColorExporterTests: XCTestCase {
     private let colorPair2 = AssetPair<Color>(
         light: Color(name: "colorPair2", red: 119.0/255.0, green: 3.0/255.0, blue: 1.0, alpha: 0.5),
         dark: nil)
-    
+
+    private let resourceBundleName = "FigmaAssets.bundle"
+
     // MARK: - Setup
     
     override func setUp() {
@@ -129,9 +131,55 @@ final class XcodeColorExporterTests: XCTestCase {
         """
         XCTAssertEqual(generatedCode, referenceCode)
     }
+
+    func testExport_with_assets_in_main_resource_bundle() {
+        let output = XcodeColorsOutput(
+            assetsColorsURL: colorsAsssetCatalog,
+            assetsInMainBundle: true,
+            assetsInResourceBundleName: resourceBundleName,
+            colorSwiftURL: colorsFile
+        )
+        let exporter = XcodeColorExporter(output: output)
+        let result = exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        XCTAssertEqual(result.count, 4)
+        XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Colors.swift"))
+        XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("Assets.xcassets/Colors/Contents.json"))
+        XCTAssertTrue(result[2].destination.url.absoluteString.hasSuffix("colorPair1.colorset/Contents.json"))
+        XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("colorPair2.colorset/Contents.json"))
+
+        let content = result[0].data
+        XCTAssertNotNil(content)
+
+        let generatedCode = String(data: content!, encoding: .utf8)
+        let referenceCode = """
+        \(header)
+
+        import UIKit
+
+        private class BundleProvider {
+            static let bundle: Bundle = {
+                let url = Bundle.main
+                    .resourceURL!.appendingPathComponent("\(resourceBundleName)")
+                return Bundle(path: url.path)!
+            }()
+        }
+
+        public extension UIColor {
+            static var colorPair1: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+            static var colorPair2: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+        }
+
+        """
+        XCTAssertEqual(generatedCode, referenceCode)
+    }
     
     func testExport_with_assets_in_separate_bundle() {
-        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: false, colorSwiftURL: colorsFile)
+        let output = XcodeColorsOutput(
+            assetsColorsURL: colorsAsssetCatalog,
+            assetsInMainBundle: false,
+            colorSwiftURL: colorsFile
+        )
         let exporter = XcodeColorExporter(output: output)
         let result = exporter.export(colorPairs: [colorPair1, colorPair2])
         
@@ -152,6 +200,48 @@ final class XcodeColorExporterTests: XCTestCase {
 
         private class BundleProvider {
             static let bundle = Bundle(for: BundleProvider.self)
+        }
+
+        public extension UIColor {
+            static var colorPair1: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+            static var colorPair2: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+        }
+
+        """
+        XCTAssertEqual(generatedCode, referenceCode)
+    }
+
+    func testExport_with_assets_in_separate_bundle_resource_bundle() {
+        let output = XcodeColorsOutput(
+            assetsColorsURL: colorsAsssetCatalog,
+            assetsInMainBundle: false,
+            assetsInResourceBundleName: resourceBundleName,
+            colorSwiftURL: colorsFile
+        )
+        let exporter = XcodeColorExporter(output: output)
+        let result = exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        XCTAssertEqual(result.count, 4)
+        XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Colors.swift"))
+        XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("Assets.xcassets/Colors/Contents.json"))
+        XCTAssertTrue(result[2].destination.url.absoluteString.hasSuffix("colorPair1.colorset/Contents.json"))
+        XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("colorPair2.colorset/Contents.json"))
+
+        let content = result[0].data
+        XCTAssertNotNil(content)
+
+        let generatedCode = String(data: content!, encoding: .utf8)
+        let referenceCode = """
+        \(header)
+
+        import UIKit
+
+        private class BundleProvider {
+            static let bundle: Bundle = {
+                let url = Bundle(for: BundleProvider.self)
+                    .resourceURL!.appendingPathComponent("\(resourceBundleName)")
+                return Bundle(path: url.path)!
+            }()
         }
 
         public extension UIColor {
@@ -185,6 +275,49 @@ final class XcodeColorExporterTests: XCTestCase {
 
         private class BundleProvider {
             static let bundle = Bundle.module
+        }
+
+        public extension UIColor {
+            static var colorPair1: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+            static var colorPair2: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+        }
+
+        """
+        XCTAssertEqual(generatedCode, referenceCode)
+    }
+
+    func testExport_with_assets_in_swift_package_resource_bundle() {
+        let output = XcodeColorsOutput(
+            assetsColorsURL: colorsAsssetCatalog,
+            assetsInMainBundle: false,
+            assetsInSwiftPackage: true,
+            assetsInResourceBundleName: resourceBundleName,
+            colorSwiftURL: colorsFile
+        )
+        let exporter = XcodeColorExporter(output: output)
+        let result = exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        XCTAssertEqual(result.count, 4)
+        XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Colors.swift"))
+        XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("Assets.xcassets/Colors/Contents.json"))
+        XCTAssertTrue(result[2].destination.url.absoluteString.hasSuffix("colorPair1.colorset/Contents.json"))
+        XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("colorPair2.colorset/Contents.json"))
+
+        let content = result[0].data
+        XCTAssertNotNil(content)
+
+        let generatedCode = String(data: content!, encoding: .utf8)
+        let referenceCode = """
+        \(header)
+
+        import UIKit
+
+        private class BundleProvider {
+            static let bundle: Bundle = {
+                let url = Bundle.module
+                    .resourceURL!.appendingPathComponent("\(resourceBundleName)")
+                return Bundle(path: url.path)!
+            }()
         }
 
         public extension UIColor {

@@ -105,11 +105,17 @@ final public class XcodeColorExporter {
             }
         }
 
+        let bundleProvider = BundleProviderUtils.bundleProvider(
+            assetsInMainBundle: output.assetsInMainBundle,
+            assetsInSwiftPackage: output.assetsInSwiftPackage,
+            assetsInResourceBundleName: output.assetsInResourceBundleName
+        )
+
         return """
         \(header)
         
         import SwiftUI
-        \(output.assetsInMainBundle ? "" : (output.assetsInSwiftPackage ? bundleProviderSwiftPackage : bundleProvider))
+        \(bundleProvider)
         public extension Color {
         \(strings.joined(separator: "\n"))
         }
@@ -127,7 +133,7 @@ final public class XcodeColorExporter {
         colorPairs.forEach { colorPair in
             let content: String
             if formAsset {
-                if output.assetsInMainBundle {
+                if output.assetsInMainBundle, output.assetsInResourceBundleName == nil {
                     content = "    \(objcAttribute ? "@objc " : "")static var \(colorPair.light.name): UIColor { UIColor(named: #function)! }"
                 } else {
                     content = "    \(objcAttribute ? "@objc " : "")static var \(colorPair.light.name): UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }"
@@ -160,12 +166,23 @@ final public class XcodeColorExporter {
             }
             contents.append(content)
         }
-        
+
+        let bundleProvider = { () -> String in
+            guard formAsset else {
+                return ""
+            }
+            return BundleProviderUtils.bundleProvider(
+                assetsInMainBundle: output.assetsInMainBundle,
+                assetsInSwiftPackage: output.assetsInSwiftPackage,
+                assetsInResourceBundleName: output.assetsInResourceBundleName
+            )
+        }()
+
         return """
         \(header)
 
         import UIKit
-        \((!output.assetsInMainBundle && formAsset) ? (output.assetsInSwiftPackage ? bundleProviderSwiftPackage : bundleProvider) : "")
+        \(bundleProvider)
         public extension UIColor {
         \(contents.joined(separator: "\n"))
         }

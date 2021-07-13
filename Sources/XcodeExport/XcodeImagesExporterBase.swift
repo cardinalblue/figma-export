@@ -93,12 +93,18 @@ public class XcodeImagesExporterBase {
                 return "    static var \(name): Image { Image(#function, bundle: BundleProvider.bundle) }"
             }
         }
+
+        let bundleProvider = BundleProviderUtils.bundleProvider(
+            assetsInMainBundle: output.assetsInMainBundle,
+            assetsInSwiftPackage: output.assetsInSwiftPackage,
+            assetsInResourceBundleName: output.assetsInResourceBundleName
+        )
         
         return """
         \(header)
 
         import SwiftUI
-        \(output.assetsInMainBundle ? "" : (output.assetsInSwiftPackage ? bundleProviderSwiftPackage : bundleProvider))
+        \(bundleProvider)
         public extension Image {
         \(images.joined(separator: "\n"))
         }
@@ -115,12 +121,18 @@ public class XcodeImagesExporterBase {
                 return "    \(addObjcAttribute ? "@objc ": "")static var \(name): UIImage { UIImage(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }"
             }
         }
-        
+
+        let bundleProvider = BundleProviderUtils.bundleProvider(
+            assetsInMainBundle: output.assetsInMainBundle,
+            assetsInSwiftPackage: output.assetsInSwiftPackage,
+            assetsInResourceBundleName: output.assetsInResourceBundleName
+        )
+
         return """
         \(header)
 
         import UIKit
-        \(output.assetsInMainBundle ? "" : (output.assetsInSwiftPackage ? bundleProviderSwiftPackage : bundleProvider))
+        \(bundleProvider)
         public extension UIImage {
         \(images.joined(separator: "\n"))
         }

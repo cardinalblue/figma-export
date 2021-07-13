@@ -64,6 +64,7 @@ extension FigmaExportCommand {
                 assetsFolderURL: assetsURL,
                 assetsInMainBundle: ios.xcassetsInMainBundle,
                 assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
+                assetsInResourceBundleName: ios.xcassetsInResourceBundleName,
                 addObjcAttribute: ios.addObjcAttribute,
                 preservesVectorRepresentation: ios.icons.preservesVectorRepresentation,
                 uiKitImageExtensionURL: ios.icons.imageSwift,
